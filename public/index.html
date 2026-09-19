@@ -13,36 +13,33 @@
     <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 w-full max-w-md shadow-2xl space-y-4">
       <div class="flex items-center justify-center space-x-2">
         <span class="text-2xl">🐬</span>
-        <h2 class="text-xl font-bold text-sky-400">Aiven DB Manager</h2>
+        <h2 class="text-xl font-bold text-sky-400">Aiven phpMyAdmin</h2>
       </div>
-      <p class="text-xs text-slate-400 text-center">phpMyAdmin Web Interface for Aiven Cloud</p>
+      <p class="text-xs text-slate-400 text-center">Stable Serverless Interface</p>
       
       <div class="space-y-3">
         <input id="host" type="text" placeholder="Host" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
-        <input id="port" type="number" placeholder="Port" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
-        <input id="user" type="text" placeholder="Username" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
+        <input id="port" type="number" placeholder="Port (e.g., 14363)" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
+        <input id="user" type="text" placeholder="Username (e.g., avnadmin)" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
         <input id="password" type="password" placeholder="Password" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
-        <input id="database" type="text" placeholder="Database Name" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
+        <input id="database" type="text" placeholder="Database Name (e.g., defaultdb)" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none">
         <button onclick="login()" class="w-full bg-sky-600 hover:bg-sky-500 py-2.5 rounded font-semibold text-sm transition">Login to phpMyAdmin</button>
       </div>
     </div>
   </div>
 
-  <!-- Main Dashboard -->
+  <!-- Dashboard Section -->
   <div id="dashboardSection" class="hidden p-3 md:p-6 max-w-[1600px] mx-auto space-y-4">
-    <!-- Top Bar -->
     <div class="flex justify-between items-center bg-slate-900 p-3 px-4 rounded-lg border border-slate-800">
       <div class="flex items-center space-x-3">
         <span class="text-xl">🐬</span>
-        <span class="font-bold text-sky-400 text-sm md:text-base">AL-HUDA DB Admin</span>
+        <span class="font-bold text-sky-400 text-sm md:text-base">AL-HUDA DB Manager</span>
         <span id="currentDbBadge" class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-400"></span>
       </div>
       <button onclick="logout()" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded text-xs font-semibold">Disconnect</button>
     </div>
 
-    <!-- Main Grid -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-      <!-- Sidebar Tables -->
       <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-3">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2">
           <span class="font-bold text-xs text-slate-400 uppercase">Tables</span>
@@ -51,44 +48,32 @@
         <ul id="tableList" class="space-y-1 text-xs"></ul>
       </div>
 
-      <!-- Main Table View -->
       <div class="md:col-span-4 space-y-4">
-        <!-- Tabs & Actions -->
         <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 flex flex-wrap gap-2 justify-between items-center">
           <div class="flex space-x-2">
             <button onclick="switchTab('browse')" id="tabBrowseBtn" class="bg-sky-600 px-3 py-1.5 rounded text-xs font-semibold">Browse Data</button>
             <button onclick="switchTab('structure')" id="tabStructBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs font-semibold">Structure</button>
             <button onclick="switchTab('sql')" id="tabSqlBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs font-semibold">SQL Query</button>
           </div>
-          <div class="flex items-center space-x-2">
-            <button onclick="dropCurrentTable()" id="dropTableBtn" class="hidden bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs">Drop Table</button>
-          </div>
+          <button onclick="dropCurrentTable()" id="dropTableBtn" class="hidden bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs">Drop Table</button>
         </div>
 
-        <!-- View 1: Browse Data Table -->
         <div id="browseView" class="bg-slate-900 p-4 rounded-lg border border-slate-800 overflow-x-auto min-h-[300px]">
-          <p class="text-xs text-slate-500 italic">Select a table from the sidebar to browse data.</p>
+          <p class="text-xs text-slate-500 italic">Select a table to browse.</p>
         </div>
 
-        <!-- View 2: Table Structure (Columns) -->
         <div id="structureView" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-800 overflow-x-auto">
-          <p class="text-xs text-slate-500 italic">Select a table to view column structure.</p>
+          <p class="text-xs text-slate-500 italic">Select a table to view structure.</p>
         </div>
 
-        <!-- View 3: SQL Runner & Upload -->
         <div id="sqlView" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-800 space-y-3">
-          <h3 class="font-bold text-xs text-slate-300">Run SQL Query / Import File</h3>
+          <h3 class="font-bold text-xs text-slate-300">Run Query</h3>
           <textarea id="sqlQuery" rows="5" placeholder="SELECT * FROM users;" class="w-full p-3 bg-slate-950 border border-slate-800 rounded text-xs font-mono text-sky-300 focus:outline-none"></textarea>
-          <div class="flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-              <input type="file" id="sqlFile" accept=".sql" class="text-xs text-slate-400">
-              <button onclick="uploadSQL()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-xs font-semibold">Import .sql</button>
-            </div>
+          <div class="flex justify-end">
             <button onclick="runSQL()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-xs font-semibold">Execute SQL</button>
           </div>
           <div id="sqlResult" class="bg-slate-950 p-3 rounded text-xs font-mono text-slate-300 overflow-x-auto min-h-[100px]"></div>
         </div>
-
       </div>
     </div>
   </div>
