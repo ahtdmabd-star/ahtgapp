@@ -1,4 +1,4 @@
-let dbConfig = null;
+let savedPassword = localStorage.getItem('db_master_pass') || '';
 let currentTable = null;
 let currentColumns = [];
 let currentRows = [];
@@ -7,28 +7,35 @@ async function apiCall(action, extraData = {}) {
   const res = await fetch('/api', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, config: dbConfig, ...extraData })
+    body: JSON.stringify({ action, loginPassword: savedPassword, ...extraData })
   });
   return await res.json();
 }
 
-async function login() {
-  dbConfig = {
-    host: document.getElementById('host').value.trim(),
-    port: document.getElementById('port').value.trim(),
-    user: document.getElementById('user').value.trim(),
-    password: document.getElementById('password').value.trim(),
-    database: document.getElementById('database').value.trim()
-  };
+// অটোমেটিক লগইন চেক (যদি আগে থেকে পাসওয়ার্ড সেভ থাকে)
+window.onload = () => {
+  if (savedPassword) {
+    verifyAndLoad();
+  }
+};
 
+async function login() {
+  savedPassword = document.getElementById('masterPass').value.trim();
+  if (!savedPassword) return alert('পাসওয়ার্ড লিখুন');
+  verifyAndLoad();
+}
+
+async function verifyAndLoad() {
   const data = await apiCall('connect');
   if (data.success) {
+    localStorage.setItem('db_master_pass', savedPassword);
     document.getElementById('loginSection').classList.add('hidden');
     document.getElementById('dashboardSection').classList.remove('hidden');
-    document.getElementById('currentDbBadge').innerText = `DB: ${dbConfig.database}`;
     loadTables();
   } else {
-    alert('Connection Failed: ' + data.error);
+    alert(data.error || 'লগইন ব্যর্থ হয়েছে!');
+    localStorage.removeItem('db_master_pass');
+    savedPassword = '';
   }
 }
 
@@ -195,4 +202,7 @@ async function runSQL() {
   loadTables();
 }
 
-function logout() { location.reload(); }
+function logout() {
+  localStorage.removeItem('db_master_pass');
+  location.reload();
+}
