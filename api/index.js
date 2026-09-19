@@ -1,5 +1,17 @@
 const mysql = require('mysql2/promise');
 
+// 🔐 আপনার পছন্দমতো ১টি Master Password সেট করুন
+const MASTER_PASSWORD = "Earn@$9311*Tk"; // <-- এখানে আপনার পছন্দের লগইন পাসওয়ার্ড লিখুন
+
+// 🗄️ আপনার Aiven Database-এর আসল তথ্যসমূহ
+const AIVEN_CONFIG = {
+  host: 'mysql-14cc93c7-alhudatechglobal-601b.i.aivencloud.com', // সঠিক host (.i. ছাড়া)
+  port: 14363,
+  user: 'avnadmin',
+  password: 'AVNS_hhfXltvXPam49_IMnOU',
+  database: 'defaultdb'
+};
+
 module.exports = async (req, res) => {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -9,27 +21,28 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { action, config, ...bodyData } = req.body || {};
+  const { action, loginPassword, ...bodyData } = req.body || {};
 
-  if (!config || !config.host) {
-    return res.status(400).json({ success: false, error: 'Database config missing' });
+  // 🔒 Master Password Verification
+  if (loginPassword !== MASTER_PASSWORD) {
+    return res.status(401).json({ success: false, error: 'ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।' });
   }
 
   let connection;
   try {
     connection = await mysql.createConnection({
-      host: config.host,
-      port: Number(config.port) || 3306,
-      user: config.user,
-      password: config.password,
-      database: config.database,
+      host: AIVEN_CONFIG.host,
+      port: Number(AIVEN_CONFIG.port),
+      user: AIVEN_CONFIG.user,
+      password: AIVEN_CONFIG.password,
+      database: AIVEN_CONFIG.database,
       ssl: { rejectUnauthorized: false },
       connectTimeout: 10000
     });
 
     if (action === 'connect') {
       await connection.end();
-      return res.json({ success: true, message: 'Connected!' });
+      return res.json({ success: true, message: 'কানেকশন সফল হয়েছে!' });
     }
 
     if (action === 'tables') {
