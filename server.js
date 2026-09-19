@@ -2,11 +2,38 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const multer = require('multer');
+const path = require('path'); // Path মডিউল যোগ করা হয়েছে
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// public ফোল্ডারের html/js ফাইলগুলো লোড করার জন্য
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Verify Credentials
+app.post('/api/connect', async (req, res) => {
+  try {
+    const connection = await mysql.createConnection({
+      host: req.body.host,
+      port: Number(req.body.port),
+      user: req.body.user,
+      password: req.body.password,
+      database: req.body.database,
+      ssl: { rejectUnauthorized: false }
+    });
+    await connection.end();
+    res.json({ success: true, message: "Connected!" });
+  } catch (error) {
+    res.status(401).json({ success: false, error: error.message });
+  }
+});
 
 async function getDbConnection(dbConfig) {
   return await mysql.createConnection({
@@ -19,18 +46,7 @@ async function getDbConnection(dbConfig) {
   });
 }
 
-// Verify Credentials
-app.post('/api/connect', async (req, res) => {
-  try {
-    const connection = await getDbConnection(req.body);
-    await connection.end();
-    res.json({ success: true, message: "Connected!" });
-  } catch (error) {
-    res.status(401).json({ success: false, error: error.message });
-  }
-});
-
-// Get Tables List with Row Count
+// Get Tables List
 app.post('/api/tables', async (req, res) => {
   try {
     const connection = await getDbConnection(req.body.config);
@@ -69,7 +85,7 @@ app.post('/api/delete-row', async (req, res) => {
   }
 });
 
-// Update Single Cell / Row
+// Update Single Row
 app.post('/api/update-row', async (req, res) => {
   const { config, table, primaryKeyColumn, primaryKeyValue, updatedData } = req.body;
   try {
@@ -110,7 +126,7 @@ app.post('/api/drop-table', async (req, res) => {
   }
 });
 
-// Custom SQL Query Execution
+// Custom SQL Execution
 app.post('/api/execute-sql', async (req, res) => {
   const { config, sql } = req.body;
   try {
