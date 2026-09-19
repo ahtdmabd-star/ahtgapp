@@ -8,7 +8,7 @@ const AIVEN_CONFIG = {
   host: 'mysql-14cc93c7-alhudatechglobal-601b.i.aivencloud.com', // সঠিক host (.i. ছাড়া)
   port: 14363,
   user: 'avnadmin',
-  password: 'AVNS_hhfXltvXPam49_IMnOU',
+  password: 'AVNS_hhfXItvXPam49_lMnOU',
   database: 'defaultdb'
 };
 
