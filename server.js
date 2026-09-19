@@ -8,7 +8,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Dynamic Aiven SSL DB Connection
 async function getDbConnection(dbConfig) {
   return await mysql.createConnection({
     host: dbConfig.host,
@@ -16,24 +15,22 @@ async function getDbConnection(dbConfig) {
     user: dbConfig.user,
     password: dbConfig.password,
     database: dbConfig.database,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
   });
 }
 
-// 1. Verify Credentials & Test Connection
+// Verify Credentials
 app.post('/api/connect', async (req, res) => {
   try {
     const connection = await getDbConnection(req.body);
     await connection.end();
-    res.json({ success: true, message: "Aiven Database Connected Successfully!" });
+    res.json({ success: true, message: "Connected!" });
   } catch (error) {
     res.status(401).json({ success: false, error: error.message });
   }
 });
 
-// 2. Fetch All Tables
+// Get Tables List with Row Count
 app.post('/api/tables', async (req, res) => {
   try {
     const connection = await getDbConnection(req.body.config);
@@ -45,7 +42,75 @@ app.post('/api/tables', async (req, res) => {
   }
 });
 
-// 3. Execute Custom SQL Queries
+// Browse Table Data (Rows & Columns)
+app.post('/api/browse-table', async (req, res) => {
+  const { config, table } = req.body;
+  try {
+    const connection = await getDbConnection(config);
+    const [rows] = await connection.query(`SELECT * FROM \`${table}\` LIMIT 500`);
+    const [fields] = await connection.query(`SHOW COLUMNS FROM \`${table}\``);
+    await connection.end();
+    res.json({ success: true, rows, columns: fields });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete Single Row
+app.post('/api/delete-row', async (req, res) => {
+  const { config, table, primaryKeyColumn, primaryKeyValue } = req.body;
+  try {
+    const connection = await getDbConnection(config);
+    await connection.query(`DELETE FROM \`${table}\` WHERE \`${primaryKeyColumn}\` = ?`, [primaryKeyValue]);
+    await connection.end();
+    res.json({ success: true, message: "Row deleted successfully!" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update Single Cell / Row
+app.post('/api/update-row', async (req, res) => {
+  const { config, table, primaryKeyColumn, primaryKeyValue, updatedData } = req.body;
+  try {
+    const connection = await getDbConnection(config);
+    const setClause = Object.keys(updatedData).map(key => `\`${key}\` = ?`).join(', ');
+    const values = [...Object.values(updatedData), primaryKeyValue];
+    await connection.query(`UPDATE \`${table}\` SET ${setClause} WHERE \`${primaryKeyColumn}\` = ?`, values);
+    await connection.end();
+    res.json({ success: true, message: "Row updated successfully!" });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Drop/Delete Column
+app.post('/api/drop-column', async (req, res) => {
+  const { config, table, column } = req.body;
+  try {
+    const connection = await getDbConnection(config);
+    await connection.query(`ALTER TABLE \`${table}\` DROP COLUMN \`${column}\``);
+    await connection.end();
+    res.json({ success: true, message: `Column ${column} dropped!` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Drop Entire Table
+app.post('/api/drop-table', async (req, res) => {
+  const { config, table } = req.body;
+  try {
+    const connection = await getDbConnection(config);
+    await connection.query(`DROP TABLE \`${table}\``);
+    await connection.end();
+    res.json({ success: true, message: `Table ${table} deleted!` });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Custom SQL Query Execution
 app.post('/api/execute-sql', async (req, res) => {
   const { config, sql } = req.body;
   try {
@@ -58,13 +123,12 @@ app.post('/api/execute-sql', async (req, res) => {
   }
 });
 
-// 4. Upload & Execute SQL Script File
+// Upload SQL Script
 app.post('/api/upload-sql', upload.single('file'), async (req, res) => {
   try {
     const config = JSON.parse(req.body.config);
     const sqlScript = req.file.buffer.toString('utf8');
     const connection = await getDbConnection(config);
-    
     const queries = sqlScript.split(';').filter(q => q.trim() !== '');
     for (let q of queries) {
       if (q.trim()) await connection.query(q);
