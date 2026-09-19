@@ -5,7 +5,7 @@ const MASTER_PASSWORD = "Earn@$9311*Tk"; // <-- এখানে আপনার 
 
 // 🗄️ আপনার Aiven Database-এর আসল তথ্যসমূহ
 const AIVEN_CONFIG = {
-  host: 'mysql-14cc93c7-alhudatechglobal-601b.i.aivencloud.com', // সঠিক host (.i. ছাড়া)
+  host: 'mysql-14cc93c7-alhudatechglobal-601b.aivencloud.com', // সঠিক host (.i. ছাড়া)
   port: 14363,
   user: 'avnadmin',
   password: 'AVNS_hhfXltvXPam49_IMnOU',
