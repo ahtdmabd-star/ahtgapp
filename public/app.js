@@ -3,6 +3,15 @@ let currentTable = null;
 let currentColumns = [];
 let currentRows = [];
 
+async function apiCall(action, extraData = {}) {
+  const res = await fetch('/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, config: dbConfig, ...extraData })
+  });
+  return await res.json();
+}
+
 async function login() {
   dbConfig = {
     host: document.getElementById('host').value.trim(),
@@ -12,31 +21,19 @@ async function login() {
     database: document.getElementById('database').value.trim()
   };
 
-  try {
-    const res = await fetch('/api/connect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dbConfig)
-    });
-    const data = await res.json();
-    if (data.success) {
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('dashboardSection').classList.remove('hidden');
-      document.getElementById('currentDbBadge').innerText = `DB: ${dbConfig.database}`;
-      loadTables();
-    } else {
-      alert('Connection Failed: ' + data.error);
-    }
-  } catch (err) { alert('Error: ' + err.message); }
+  const data = await apiCall('connect');
+  if (data.success) {
+    document.getElementById('loginSection').classList.add('hidden');
+    document.getElementById('dashboardSection').classList.remove('hidden');
+    document.getElementById('currentDbBadge').innerText = `DB: ${dbConfig.database}`;
+    loadTables();
+  } else {
+    alert('Connection Failed: ' + data.error);
+  }
 }
 
 async function loadTables() {
-  const res = await fetch('/api/tables', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig })
-  });
-  const data = await res.json();
+  const data = await apiCall('tables');
   if (data.success) {
     const list = document.getElementById('tableList');
     list.innerHTML = '';
@@ -50,7 +47,7 @@ async function loadTables() {
   }
 }
 
-async function selectTable(name) {
+function selectTable(name) {
   currentTable = name;
   document.getElementById('dropTableBtn').classList.remove('hidden');
   loadTables();
@@ -59,12 +56,7 @@ async function selectTable(name) {
 
 async function browseTable(name) {
   switchTab('browse');
-  const res = await fetch('/api/browse-table', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig, table: name })
-  });
-  const data = await res.json();
+  const data = await apiCall('browse-table', { table: name });
   if (data.success) {
     currentColumns = data.columns;
     currentRows = data.rows;
@@ -140,54 +132,34 @@ function renderStructureView() {
 }
 
 async function deleteRow(primaryCol, primaryVal) {
-  if (!confirm(`Are you sure you want to delete row where ${primaryCol} = '${primaryVal}'?`)) return;
-  const res = await fetch('/api/delete-row', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig, table: currentTable, primaryKeyColumn: primaryCol, primaryKeyValue: primaryVal })
-  });
-  const data = await res.json();
+  if (!confirm(`Delete row where ${primaryCol} = '${primaryVal}'?`)) return;
+  const data = await apiCall('delete-row', { table: currentTable, primaryKeyColumn: primaryCol, primaryKeyValue: primaryVal });
   if (data.success) browseTable(currentTable);
   else alert(data.error);
 }
 
 async function editRow(rowIdx, primaryCol) {
   const row = currentRows[rowIdx];
-  const newVal = prompt(`Update row JSON data for ${primaryCol} = ${row[primaryCol]}:`, JSON.stringify(row));
+  const newVal = prompt(`Update JSON for ${primaryCol} = ${row[primaryCol]}:`, JSON.stringify(row));
   if (!newVal) return;
   try {
     const updatedData = JSON.parse(newVal);
-    const res = await fetch('/api/update-row', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config: dbConfig, table: currentTable, primaryKeyColumn: primaryCol, primaryKeyValue: row[primaryCol], updatedData })
-    });
-    const data = await res.json();
+    const data = await apiCall('update-row', { table: currentTable, primaryKeyColumn: primaryCol, primaryKeyValue: row[primaryCol], updatedData });
     if (data.success) browseTable(currentTable);
     else alert(data.error);
   } catch (err) { alert('Invalid JSON format'); }
 }
 
 async function dropColumn(colName) {
-  if (!confirm(`Drop column '${colName}' from table '${currentTable}'?`)) return;
-  const res = await fetch('/api/drop-column', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig, table: currentTable, column: colName })
-  });
-  const data = await res.json();
+  if (!confirm(`Drop column '${colName}'?`)) return;
+  const data = await apiCall('drop-column', { table: currentTable, column: colName });
   if (data.success) browseTable(currentTable);
   else alert(data.error);
 }
 
 async function dropCurrentTable() {
-  if (!confirm(`DANGER: Are you sure you want to DROP table '${currentTable}'?`)) return;
-  const res = await fetch('/api/drop-table', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig, table: currentTable })
-  });
-  const data = await res.json();
+  if (!confirm(`DROP table '${currentTable}'?`)) return;
+  const data = await apiCall('drop-table', { table: currentTable });
   if (data.success) {
     currentTable = null;
     loadTables();
@@ -218,25 +190,8 @@ function switchTab(tab) {
 
 async function runSQL() {
   const sql = document.getElementById('sqlQuery').value.trim();
-  const res = await fetch('/api/execute-sql', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ config: dbConfig, sql })
-  });
-  const data = await res.json();
+  const data = await apiCall('execute-sql', { sql });
   document.getElementById('sqlResult').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-  loadTables();
-}
-
-async function uploadSQL() {
-  const fileInput = document.getElementById('sqlFile');
-  if(!fileInput.files[0]) return alert("Select an .sql file");
-  const formData = new FormData();
-  formData.append('file', fileInput.files[0]);
-  formData.append('config', JSON.stringify(dbConfig));
-  const res = await fetch('/api/upload-sql', { method: 'POST', body: formData });
-  const data = await res.json();
-  alert(data.message || data.error);
   loadTables();
 }
 
