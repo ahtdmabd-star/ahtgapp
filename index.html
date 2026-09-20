@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AL-HUDA DB Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
+
+  <!-- Login Section -->
+  <div id="loginSection" class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex items-center justify-center space-x-2">
+        <span class="text-3xl">🔑</span>
+        <h2 class="text-xl font-bold text-sky-400">Database Login</h2>
+      </div>
+      <p class="text-xs text-slate-400 text-center">একসেস করতে আপনার সিক্রেট পাসওয়ার্ডটি দিন</p>
+      
+      <div class="space-y-3">
+        <input id="masterPass" type="password" placeholder="Master Password" class="w-full p-2.5 bg-slate-950 border border-slate-800 rounded text-sm focus:border-sky-500 outline-none text-center tracking-widest text-white">
+        <button onclick="login()" class="w-full bg-sky-600 hover:bg-sky-500 py-2.5 rounded font-semibold text-sm transition cursor-pointer">Login to Database</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboardSection" class="hidden p-3 md:p-6 max-w-[1600px] mx-auto space-y-4">
+    <div class="flex justify-between items-center bg-slate-900 p-3 px-4 rounded-lg border border-slate-800">
+      <div class="flex items-center space-x-3">
+        <span class="text-xl">🐬</span>
+        <span class="font-bold text-sky-400 text-sm md:text-base">AL-HUDA DB Manager</span>
+      </div>
+      <button onclick="logout()" class="bg-rose-600 hover:bg-rose-500 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer">Logout</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <span class="font-bold text-xs text-slate-400 uppercase">Tables</span>
+          <button onclick="loadTables()" class="text-xs text-sky-400 hover:underline cursor-pointer">Refresh</button>
+        </div>
+        <ul id="tableList" class="space-y-1 text-xs"></ul>
+      </div>
+
+      <div class="md:col-span-4 space-y-4">
+        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 flex flex-wrap gap-2 justify-between items-center">
+          <div class="flex space-x-2">
+            <button onclick="switchTab('browse')" id="tabBrowseBtn" class="bg-sky-600 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer">Browse Data</button>
+            <button onclick="switchTab('structure')" id="tabStructBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer">Structure</button>
+            <button onclick="switchTab('sql')" id="tabSqlBtn" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs font-semibold cursor-pointer">SQL Query</button>
+          </div>
+          <button onclick="dropCurrentTable()" id="dropTableBtn" class="hidden bg-rose-600 hover:bg-rose-500 px-3 py-1 rounded text-xs cursor-pointer">Drop Table</button>
+        </div>
+
+        <div id="browseView" class="bg-slate-900 p-4 rounded-lg border border-slate-800 overflow-x-auto min-h-[300px]">
+          <p class="text-xs text-slate-500 italic">Select a table to browse.</p>
+        </div>
+
+        <div id="structureView" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-800 overflow-x-auto">
+          <p class="text-xs text-slate-500 italic">Select a table to view structure.</p>
+        </div>
+
+        <div id="sqlView" class="hidden bg-slate-900 p-4 rounded-lg border border-slate-800 space-y-3">
+          <h3 class="font-bold text-xs text-slate-300">Run Query</h3>
+          <textarea id="sqlQuery" rows="5" placeholder="SELECT * FROM users;" class="w-full p-3 bg-slate-950 border border-slate-800 rounded text-xs font-mono text-sky-300 focus:outline-none"></textarea>
+          <div class="flex justify-end">
+            <button onclick="runSQL()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 rounded text-xs font-semibold cursor-pointer">Execute SQL</button>
+          </div>
+          <div id="sqlResult" class="bg-slate-950 p-3 rounded text-xs font-mono text-slate-300 overflow-x-auto min-h-[100px]"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
