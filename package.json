@@ -1,8 +1,0 @@
-{
-  "name": "ahtgapp",
-  "version": "1.0.0",
-  "dependencies": {
-    "@vercel/node": "^3.0.0",
-    "mysql2": "^3.9.0"
-  }
-}
