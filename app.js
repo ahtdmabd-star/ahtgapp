@@ -1,5 +1,5 @@
-// ⚠️ আপনার Render ব্যাকএন্ড লাইভ লিংক এখানে বসাবেন:
-const API_URL = "https://your-app-name.onrender.com"; 
+// যেহেতু একই ডোমেইনে হোস্ট করা হচ্ছে, তাই API_URL ফাঁকা রাখা হলো
+const API_URL = ""; 
 
 let savedPassword = localStorage.getItem('db_master_pass') || '';
 let currentTable = null;
@@ -8,7 +8,7 @@ let currentRows = [];
 
 async function apiCall(action, extraData = {}) {
   try {
-    const res = await fetch(API_URL, {
+    const res = await fetch(`/api/${action === 'browse-table' ? 'browse-table' : action === 'delete-row' ? 'delete-row' : action === 'update-row' ? 'update-row' : action === 'drop-column' ? 'drop-column' : action === 'drop-table' ? 'drop-table' : action === 'execute-sql' ? 'execute-sql' : action}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, loginPassword: savedPassword, ...extraData })
