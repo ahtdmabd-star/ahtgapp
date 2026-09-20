@@ -1,11 +1,12 @@
 {
-  "name": "ahtgapp",
+  "name": "al-huda-db-manager",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
+    "express": "^4.19.2",
     "mysql2": "^3.9.0"
   }
 }
